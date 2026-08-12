@@ -1,51 +1,88 @@
+"use client";
+
+import { useState } from "react";
+
 import ProductFilters from "./ProductFilters";
 import ProductGrid from "./ProductGrid";
 
+import { products as allProducts} from "../../data/products";
+import { Product } from "../../data/products";
+
 export default function ProductsPage() {
+  const [filteredProducts, setFilteredProducts] =
+    useState<Product[]>(allProducts);
+
+  const handleFilterChange = (
+    categories: string[],
+    minPrice: number,
+    maxPrice: number,
+    rating: number
+  ) => {
+    const result = allProducts.filter((product) => {
+      // Category condition
+      const categoryMatch =
+        categories.length === 0 ||
+        categories.includes(product.category);
+
+      // Price condition
+      const priceMatch =
+        product.price >= minPrice &&
+        product.price <= maxPrice;
+
+      // Rating condition
+      const ratingMatch =
+        product.rating >= rating;
+
+      // ALL conditions must pass
+      return (
+        categoryMatch &&
+        priceMatch &&
+        ratingMatch
+      );
+    });
+
+    setFilteredProducts(result);
+  };
+
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Page Header */}
+      {/* Header */}
       <section className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900">
             All Products
           </h1>
 
           <p className="mt-1 text-sm text-gray-500">
-            Discover products that match your preferences.
+            Find products that match your preferences.
           </p>
         </div>
       </section>
 
-      {/* Products Section */}
+      {/* Main */}
       <section className="mx-auto flex max-w-7xl gap-6 px-4 py-8 sm:px-6">
-        {/* Filters */}
-        <aside className="hidden w-60 shrink-0 md:block">
-          <ProductFilters />
-        </aside>
+        {/* Sidebar */}
+        <div className="hidden w-64 shrink-0 md:block">
+          <ProductFilters
+            onFilterChange={handleFilterChange}
+          />
+        </div>
 
         {/* Products */}
         <div className="min-w-0 flex-1">
-          {/* Results Header */}
-          <div className="mb-5 flex items-center justify-between">
+          {/* Result count */}
+          <div className="mb-5">
             <p className="text-sm text-gray-500">
-              Showing <span className="font-medium text-gray-900">24</span>{" "}
-              products
+              <span className="font-semibold text-gray-900">
+                {filteredProducts.length}
+              </span>{" "}
+              products found
             </p>
-
-            <select
-              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              defaultValue="relevance"
-            >
-              <option value="relevance">Sort: Relevance</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="rating">Rating</option>
-            </select>
           </div>
 
-          {/* Product Grid */}
-          <ProductGrid />
+          <ProductGrid
+            products={filteredProducts}
+          />
         </div>
       </section>
     </main>
