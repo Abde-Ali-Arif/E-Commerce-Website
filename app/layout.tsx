@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
+import CartDrawer from "./components/cart/CartDrawer";
+import { ToastProvider } from "./context/ToastContext";
+import { WishlistProvider } from "./context/WishlistContext";
+import { CartProvider } from "./context/CartContext";
 
 import "./globals.css";
 
@@ -16,8 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Marketly",
-  description: "A modern marketplace",
+  title: "Marketly | Modern E-Commerce Platform",
+  description: "Shop curated electronics, footwear, premium apparel, audio, and accessories with fast express shipping.",
 };
 
 export default function RootLayout({
@@ -26,15 +30,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-slate-50 text-slate-900 selection:bg-indigo-500 selection:text-white`}
       >
-        <Navbar />
-
-        {children}
-
-        <Footer />
+        <ToastProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <CartDrawer />
+              <Footer />
+            </CartProvider>
+          </WishlistProvider>
+        </ToastProvider>
       </body>
     </html>
   );

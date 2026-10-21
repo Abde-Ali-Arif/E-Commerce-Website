@@ -1,215 +1,199 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
+import { Star, RotateCcw, Flame, CheckCircle, SlidersHorizontal } from "lucide-react";
+import { productCategories } from "../data/products";
 
-interface ProductFiltersProps {
-  onFilterChange: (
-    categories: string[],
-    minPrice: number,
-    maxPrice: number,
-    rating: number
-  ) => void;
+export interface FilterState {
+  categories: string[];
+  minPrice: number;
+  maxPrice: number;
+  rating: number;
+  dealsOnly: boolean;
+  inStockOnly: boolean;
 }
 
-const categories = [
-  "Electronics",
-  "Apparel",
-  "Footwear",
-  "Accessories",
-];
+interface ProductFiltersProps {
+  filters: FilterState;
+  onFilterChange: (newFilters: FilterState) => void;
+  onReset: () => void;
+}
 
 export default function ProductFilters({
+  filters,
   onFilterChange,
+  onReset,
 }: ProductFiltersProps) {
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(100000);
-  const [rating, setRating] = useState(0);
-
-  const updateFilters = (
-    categories: string[],
-    min: number,
-    max: number,
-    selectedRating: number
-  ) => {
-    onFilterChange(categories, min, max, selectedRating);
+  const toggleCategory = (catId: string) => {
+    let updatedCategories: string[];
+    if (catId === "all") {
+      updatedCategories = [];
+    } else {
+      updatedCategories = filters.categories.includes(catId)
+        ? filters.categories.filter((c) => c !== catId)
+        : [...filters.categories, catId];
+    }
+    onFilterChange({ ...filters, categories: updatedCategories });
   };
 
-  const toggleCategory = (category: string) => {
-    const updatedCategories = selectedCategories.includes(category)
-      ? selectedCategories.filter((item) => item !== category)
-      : [...selectedCategories, category];
-
-    setSelectedCategories(updatedCategories);
-
-    updateFilters(
-      updatedCategories,
-      minPrice,
-      maxPrice,
-      rating
-    );
+  const handlePriceChange = (min: number, max: number) => {
+    onFilterChange({ ...filters, minPrice: min, maxPrice: max });
   };
 
-  const changeMinPrice = (value: number) => {
-    const newMin = Math.min(value, maxPrice - 1000);
-
-    setMinPrice(newMin);
-
-    updateFilters(
-      selectedCategories,
-      newMin,
-      maxPrice,
-      rating
-    );
+  const handleRatingChange = (ratingVal: number) => {
+    onFilterChange({ ...filters, rating: filters.rating === ratingVal ? 0 : ratingVal });
   };
 
-  const changeMaxPrice = (value: number) => {
-    const newMax = Math.max(value, minPrice + 1000);
-
-    setMaxPrice(newMax);
-
-    updateFilters(
-      selectedCategories,
-      minPrice,
-      newMax,
-      rating
-    );
+  const toggleDealsOnly = () => {
+    onFilterChange({ ...filters, dealsOnly: !filters.dealsOnly });
   };
 
-  const changeRating = (value: number) => {
-    setRating(value);
-
-    updateFilters(
-      selectedCategories,
-      minPrice,
-      maxPrice,
-      value
-    );
+  const toggleInStockOnly = () => {
+    onFilterChange({ ...filters, inStockOnly: !filters.inStockOnly });
   };
 
-  const clearFilters = () => {
-    setSelectedCategories([]);
-    setMinPrice(0);
-    setMaxPrice(100000);
-    setRating(0);
-
-    updateFilters([], 0, 100000, 0);
-  };
+  const hasActiveFilters =
+    filters.categories.length > 0 ||
+    filters.minPrice > 0 ||
+    filters.maxPrice < 250000 ||
+    filters.rating > 0 ||
+    filters.dealsOnly ||
+    filters.inStockOnly;
 
   return (
-    <aside className="sticky top-24 rounded-xl border border-gray-200 bg-white p-5">
+    <aside className="bg-white rounded-2xl border border-gray-200/90 p-5 shadow-sm space-y-6">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="font-semibold text-gray-900">
-          Filters
-        </h2>
-
-        <button
-          onClick={clearFilters}
-          className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
-        >
-          Clear all
-        </button>
+      <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+        <div className="flex items-center gap-2 text-sm font-bold text-gray-900">
+          <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+          <span>Filter Products</span>
+        </div>
+        {hasActiveFilters && (
+          <button
+            onClick={onReset}
+            className="text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1 cursor-pointer transition"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Clear All
+          </button>
+        )}
       </div>
 
-      {/* Category */}
-      <div className="border-b border-gray-100 pb-5">
-        <h3 className="mb-3 text-sm font-semibold text-gray-900">
-          Category
+      {/* Quick Toggles */}
+      <div className="space-y-2.5 pb-4 border-b border-gray-100">
+        <label className="flex items-center justify-between cursor-pointer p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 transition">
+          <div className="flex items-center gap-2 text-xs font-semibold text-gray-800">
+            <Flame className="w-4 h-4 text-rose-500 fill-rose-500" />
+            <span>On Sale & Flash Deals</span>
+          </div>
+          <input
+            type="checkbox"
+            checked={filters.dealsOnly}
+            onChange={toggleDealsOnly}
+            className="w-4 h-4 text-indigo-600 rounded accent-indigo-600 cursor-pointer"
+          />
+        </label>
+
+        <label className="flex items-center justify-between cursor-pointer p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 transition">
+          <div className="flex items-center gap-2 text-xs font-semibold text-gray-800">
+            <CheckCircle className="w-4 h-4 text-emerald-600" />
+            <span>In Stock Only</span>
+          </div>
+          <input
+            type="checkbox"
+            checked={filters.inStockOnly}
+            onChange={toggleInStockOnly}
+            className="w-4 h-4 text-indigo-600 rounded accent-indigo-600 cursor-pointer"
+          />
+        </label>
+      </div>
+
+      {/* Categories */}
+      <div className="space-y-3 pb-5 border-b border-gray-100">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
+          Categories
         </h3>
-
-        <div className="space-y-3">
-          {categories.map((category) => (
-            <label
-              key={category}
-              className="flex cursor-pointer items-center gap-3 text-sm text-gray-600"
-            >
-              <input
-                type="checkbox"
-                checked={selectedCategories.includes(category)}
-                onChange={() => toggleCategory(category)}
-                className="h-4 w-4 rounded accent-indigo-600"
-              />
-
-              {category}
-            </label>
-          ))}
+        <div className="space-y-2">
+          {productCategories
+            .filter((c) => c.id !== "all")
+            .map((cat) => {
+              const isChecked = filters.categories.includes(cat.id);
+              return (
+                <label
+                  key={cat.id}
+                  className="flex items-center justify-between text-xs font-medium text-gray-700 hover:text-indigo-600 cursor-pointer py-1"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleCategory(cat.id)}
+                      className="w-4 h-4 rounded text-indigo-600 accent-indigo-600 cursor-pointer"
+                    />
+                    <span>{cat.name}</span>
+                  </div>
+                  <span className="text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full font-semibold">
+                    {cat.count}
+                  </span>
+                </label>
+              );
+            })}
         </div>
       </div>
 
-      {/* Price */}
-      <div className="border-b border-gray-100 py-5">
-        <h3 className="mb-4 text-sm font-semibold text-gray-900">
-          Price Range
-        </h3>
-
-        <div className="mb-4 flex items-center justify-between text-sm">
-          <span className="rounded-md bg-gray-100 px-2 py-1 text-gray-600">
-            ₹{minPrice.toLocaleString()}
-          </span>
-
-          <span className="text-gray-400">—</span>
-
-          <span className="rounded-md bg-gray-100 px-2 py-1 text-gray-600">
-            ₹{maxPrice.toLocaleString()}
+      {/* Price Range */}
+      <div className="space-y-3 pb-5 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
+            Price Range
+          </h3>
+          <span className="text-xs font-semibold text-indigo-600">
+            Up to ₹{filters.maxPrice.toLocaleString()}
           </span>
         </div>
 
-        {/* Minimum */}
         <input
           type="range"
-          min="0"
-          max="100000"
-          step="1000"
-          value={minPrice}
-          onChange={(e) =>
-            changeMinPrice(Number(e.target.value))
-          }
-          className="w-full accent-indigo-600"
+          min="1000"
+          max="250000"
+          step="2000"
+          value={filters.maxPrice}
+          onChange={(e) => handlePriceChange(filters.minPrice, Number(e.target.value))}
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
         />
 
-        {/* Maximum */}
-        <input
-          type="range"
-          min="0"
-          max="100000"
-          step="1000"
-          value={maxPrice}
-          onChange={(e) =>
-            changeMaxPrice(Number(e.target.value))
-          }
-          className="mt-2 w-full accent-indigo-600"
-        />
+        <div className="flex items-center justify-between text-[11px] text-gray-400 font-semibold">
+          <span>₹1,000</span>
+          <span>₹1,00,000</span>
+          <span>₹2,50,000+</span>
+        </div>
       </div>
 
-      {/* Rating */}
-      <div className="pt-5">
-        <h3 className="mb-3 text-sm font-semibold text-gray-900">
-          Minimum Rating
+      {/* Customer Rating */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
+          Customer Rating
         </h3>
-
-        <div className="space-y-3">
-          {[5, 4, 3, 2, 1].map((value) => (
-            <label
-              key={value}
-              className="flex cursor-pointer items-center gap-2 text-sm"
+        <div className="space-y-1.5">
+          {[4.5, 4.0, 3.5, 3.0].map((star) => (
+            <button
+              key={star}
+              onClick={() => handleRatingChange(star)}
+              className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition text-left cursor-pointer ${
+                filters.rating === star
+                  ? "bg-amber-50 text-amber-900 border border-amber-200"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
             >
-              <input
-                type="radio"
-                name="rating"
-                checked={rating === value}
-                onChange={() => changeRating(value)}
-                className="h-4 w-4 accent-indigo-600"
-              />
-
-              <span className="text-yellow-500">
-                {"★".repeat(value)}
-              </span>
-
-              <span className="text-gray-500">
-                & above
-              </span>
-            </label>
+              <div className="flex items-center gap-1.5 text-amber-400">
+                <Star className="w-4 h-4 fill-amber-400" />
+                <span className="text-gray-900">{star} stars & above</span>
+              </div>
+              {filters.rating === star && (
+                <span className="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-bold">
+                  Active
+                </span>
+              )}
+            </button>
           ))}
         </div>
       </div>
